@@ -1,0 +1,3 @@
+D:/codefield/my_computer_network_lab/socket/sourcecode/cmake-build-debug/CMakeFiles/main.dir
+D:/codefield/my_computer_network_lab/socket/sourcecode/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/codefield/my_computer_network_lab/socket/sourcecode/cmake-build-debug/CMakeFiles/rebuild_cache.dir

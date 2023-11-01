@@ -1,0 +1,8 @@
+# ninja log v5
+4	1067	7205265057580253	CMakeFiles/main.dir/main.cpp.obj	5feeeec3e0602d0d
+0	237	7204533506988854	build.ninja	1e05ab72b1a68ee7
+16	171	7204593965116456	CMakeFiles/main.dir/filepaths.cpp.obj	47787ed16696bde6
+21	437	7204695648162380	CMakeFiles/main.dir/logger.cpp.obj	64859cbab39e6c73
+1005	1406	7205266259147077	main.exe	b3472c3769928edf
+15	178	7204558920831834	CMakeFiles/main.dir/myTimer.cpp.obj	b7fb299cb0d7db00
+3	1004	7205266255185000	CMakeFiles/main.dir/client.cpp.obj	dc8a6210d73693a0
