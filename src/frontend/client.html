@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>File Operations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        input[type="radio"],
+        input[type="text"],
+        button {
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #log {
+            width: 400px;
+            height: 200px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>File Operations</h1>
+
+    <div class="input-container">
+        <label for="operation">Choose Operation:</label>
+        <div>
+            <input type="radio" name="operation" value="read" id="read"> Read
+            <input type="radio" name="operation" value="write" id="write"> Write
+        </div>
+    </div>
+
+    <div class="input-container">
+        <label for="mode">Choose Mode:</label>
+        <div>
+            <input type="radio" name="mode" value="binary" id="binary"> Binary
+            <input type="radio" name="mode" value="ascii" id="ascii"> ASCII
+        </div>
+    </div>
+
+    <div class="input-container">
+        <label for="fileName">File Name:</label>
+        <input type="text" id="fileName">
+    </div>
+
+    <button id="submit">Submit</button>
+
+    <div id="log"></div>
+
+    <script>
+        document.getElementById("submit").addEventListener("click", function () {
+            var operation = document.querySelector('input[name="operation"]:checked').value;
+            var mode = document.querySelector('input[name="mode"]:checked').value;
+            var fileName = document.getElementById("fileName").value;
+    
+            var requestData = {
+                operation: operation,
+                mode: mode,
+                fileName: fileName
+            };
+    
+            fetch('http://127.0.0.1:80/process', { // Replace with your server's address and port
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    var logData = JSON.stringify(data);
+    
+                    // Update the log area and scroll to the bottom.
+                    var logDiv = document.getElementById("log");
+                    logDiv.innerHTML += "<br>" + logData;
+                    logDiv.scrollTop = logDiv.scrollHeight;  // Scroll to the bottom
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        });
+    </script>
+    
+</body>
+
+</html>

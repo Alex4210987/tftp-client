@@ -9,7 +9,9 @@ add_executable(main main.cpp logger.cpp client.cpp
         client.cpp
         filepaths.cpp
         myTimer.cpp
-        myTimer.h)
+        myTimer.h
+        oat_main.cpp
+        handler.h)
 
 # 如果需要链接额外的库（例如，Windows套接字库）
 target_link_libraries(main wsock32)
