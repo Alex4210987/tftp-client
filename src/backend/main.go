@@ -4,13 +4,48 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type request struct {
+	Operation string `json:"operation"`
+	Mode      string `json:"mode"`
+	FileName  string `json:"fileName"`
+}
+
 func main() {
 	// 创建一个 Gin 路由器
 	router := gin.Default()
+	log_router := gin.Default()
 
-	// 为路由器注册一个处理 GET 请求的处理器,转到processer函数
-	router.GET("/", processer)；
-	// 启动 Gin 服务器，监听在80端口
-	// 注意：需要以管理员权限或在合适的环境下运行，因为80端口通常需要特权访问
-	router.Run(":80")
+	router.OPTIONS("/tftp", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*") // 允许任何域名访问
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Status(200)
+	})
+
+	log_router.OPTIONS("/log", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*") // 允许任何域名访问
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Status(200)
+	})
+
+	log_router.POST("/log", receiveLog)
+	router.GET("/ws", handleWebSocket)
+	router.POST("/tftp", tftp)
+
+	go func() {
+		if err := router.Run(":8080"); err != nil {
+			panic(err)
+		}
+	}()
+
+	go func() {
+		if err := log_router.Run(":8081"); err != nil {
+			panic(err)
+		}
+	}()
+
+	select {}
 }

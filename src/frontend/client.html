@@ -101,26 +101,34 @@
                 fileName: fileName
             };
     
-            fetch('http://127.0.0.1:80/process', { // Replace with your server's address and port
+            fetch('http://127.0.0.1:8080/tftp', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(requestData),
             })
-                .then((response) => response.json())
-                .then((data) => {
-                    var logData = JSON.stringify(data);
-    
-                    // Update the log area and scroll to the bottom.
-                    var logDiv = document.getElementById("log");
-                    logDiv.innerHTML += "<br>" + logData;
-                    logDiv.scrollTop = logDiv.scrollHeight;  // Scroll to the bottom
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    document.getElementById("log").innerHTML = data.message;
                 })
                 .catch((error) => {
                     console.error('Error:', error);
                 });
         });
+
+                // 前端 JavaScript 代码
+        var logDiv = document.getElementById("log");
+
+        var socket = new WebSocket("ws://127.0.0.1:8080/ws"); // WebSocket 连接到后端
+
+        socket.onmessage = function (event) {
+            // 收到日志消息时，在日志区域显示
+            logDiv.innerHTML += "<br>" + event.data;
+            logDiv.scrollTop = logDiv.scrollHeight;  // 滚动到底部
+        };
+
     </script>
     
 </body>
