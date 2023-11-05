@@ -24,7 +24,7 @@ in:
 and:
 
 ```bash
-nativefier "http://localhost:8000/client.html";move "C:\Users\Alex\File Operations-win32-x64" "D:\codefield\tftp-client"
+nativefier "http://localhost:8000/client.html";move "C:\Users\Alex\TFTP Client-win32-x64" "D:\codefield\tftp-client"
 ```
 
 in windows powershell
