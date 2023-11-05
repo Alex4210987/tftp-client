@@ -1,0 +1,15 @@
+#.idea folder
+.idea
+
+#cmake
+cmake-build-debug
+
+# 忽略根目录下除了src文件夹以外的所有文件夹
+/*
+!/src/
+!.gitignore
+!.gitattributes
+!Readme.md
+
+
+
