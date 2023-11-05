@@ -140,12 +140,13 @@ void client::readRequest(char* request, int type, int size, char* filename) {
         }
         if (buffer[1] == 3){
             //write and ack
-            totalReceived += bytesReceived;
             blockNum=(((buffer[2] & 0xff) << 8) + (buffer[3] & 0xff)) & 0xffff;
             if(bytesReceived<0){
                 fwrite(buffer+4, 1, 512, fp);
+                totalReceived += 512;
             }else{
                 fwrite(buffer+4, 1, bytesReceived-4, fp);
+                totalReceived += bytesReceived;
             }
             //l->anyLog("Received data packet%d", blockNum,"for", filename);
             sendAck(blockNum, clientSocket, serverAddr);

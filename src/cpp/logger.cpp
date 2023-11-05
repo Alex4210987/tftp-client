@@ -49,6 +49,35 @@ void logger::errorLog(const char *operation, char *filename, int errorCode, char
         std::cerr << "Error opening pipe: " << strerror(errno) << std::endl;
         exit(1);
     }
+     switch (errorCode) {
+        case 0:
+            //delete first 4 char of errorMessage
+            errorMessage += 4;
+            fprintf(pipe, "Error code: 0\tError message: %s\n", errorMessage);
+            break;
+        case 1:
+            fprintf(pipe, "Error code: 1\tError message: File not found\n");
+            break;
+        case 2:
+            fprintf(pipe, "Error code: 2\tError message: Access violation\n");
+            break;
+        case 3:
+            fprintf(pipe, "Error code: 3\tError message: Disk full or allocation exceeded\n");
+            break;
+        case 4:
+            fprintf(pipe, "Error code: 4\tError message: Illegal TFTP operation\n");
+            break;
+        case 5:
+            fprintf(pipe, "Error code: 5\tError message: ID Unknown transfer ID\n");
+            break;
+        case 6:
+            fprintf(pipe, "Error code: 6\tError message: File already exists\n");
+            break;
+        case 7:
+            fprintf(pipe, "Error code: 7\tError message: No such user\n");
+            break;
+    }
+    _pclose(pipe);
     log << "Error: " << operation << " " << filename << " " << this->getTime() << std::endl;
     switch (errorCode) {
         case 0:
@@ -56,46 +85,37 @@ void logger::errorLog(const char *operation, char *filename, int errorCode, char
             errorMessage += 4;
             log << "Error code: 0\tError message: " << errorMessage << std::endl;
             std::cout<< "Error code: 0\tError message: " << errorMessage << std::endl;
-            fprintf(pipe, "Error code: 0\tError message: %s\n", errorMessage);
             break;
         case 1:
             log << "Error code: 1\tError message: File not found" << std::endl;
             std::cout<< "Error code: 1\tError message: File not found" << std::endl;
-            fprintf(pipe, "Error code: 1\tError message: File not found\n");
             break;
         case 2:
             log << "Error code: 2\tError message: Access violation" << std::endl;
             std::cout<< "Error code: 2\tError message: Access violation" << std::endl;
-            fprintf(pipe, "Error code: 2\tError message: Access violation\n");
             break;
         case 3:
             log << "Error code: 3\tError message: Disk full or allocation exceeded" << std::endl;
             std::cout<< "Error code: 3\tError message: Disk full or allocation exceeded" << std::endl;
-            fprintf(pipe, "Error code: 3\tError message: Disk full or allocation exceeded\n");
             break;
         case 4:
             log << "Error code: 4\tError message: Illegal TFTP operation" << std::endl;
             std::cout<< "Error code: 4\tError message: Illegal TFTP operation" << std::endl;
-            fprintf(pipe, "Error code: 4\tError message: Illegal TFTP operation\n");
             break;
         case 5:
             log << "Error code: 5\tError message: ID Unknown transfer ID" << std::endl;
             std::cout<< "Error code: 5\tError message: ID Unknown transfer ID" << std::endl;
-            fprintf(pipe, "Error code: 5\tError message: ID Unknown transfer ID\n");
             break;
         case 6:
             log << "Error code: 6\tError message: File already exists" << std::endl;
             std::cout<< "Error code: 6\tError message: File already exists" << std::endl;
-            fprintf(pipe, "Error code: 6\tError message: File already exists\n");
             break;
         case 7:
             log << "Error code: 7\tError message: No such user" << std::endl;
             std::cout<< "Error code: 7\tError message: No such user" << std::endl;
-            fprintf(pipe, "Error code: 7\tError message: No such user\n");
             break;
     }
     log.close();
-    _pclose(pipe);
 }
 
 char *logger::getTime() {
@@ -123,11 +143,13 @@ void logger::getAckLog(int blockNum, char *filename) {
         std::cerr << "Error opening pipe: " << strerror(errno) << std::endl;
         exit(1);
     }
+
+    fprintf(pipe, "Get ACK: %d %s %s\n", blockNum, filename, this->getTime());
+
+    _pclose(pipe);
     log << "Get ACK: " << blockNum << " " << this->getTime() << std::endl;
     std::cout<<"Get ACK: "<<blockNum<<std::endl;
-    fprintf(pipe, "Get ACK: %d %s %s\n", blockNum, filename, this->getTime());
     log.close();
-    _pclose(pipe);
 }
 
 void logger::sentDataLog(int blockNum) {
@@ -202,8 +224,9 @@ void logger::anyLog(const char *message) {
         std::cerr << "Error opening pipe: " << strerror(errno) << std::endl;
         exit(1);
     }
-    log << this->getTime() << " " << message << std::endl;
     std::cout<<this->getTime()<<" "<<message<<std::endl;
     fprintf(pipe, "%s %s\n", this->getTime(), message);
+    _pclose(pipe);
+    log << this->getTime() << " " << message << std::endl;
     log.close();
 }

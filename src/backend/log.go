@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 var upgrader = websocket.Upgrader{
@@ -18,6 +19,13 @@ var upgrader = websocket.Upgrader{
 var clients = make(map[*websocket.Conn]bool)
 
 func receiveLog(c *gin.Context) {
+	//把logdata写道文件里
+	file, err := os.OpenFile("D:/codefield/tftp-client/log/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer file.Close()
 	// 读取HTTP请求的主体内容
 	data, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -25,9 +33,17 @@ func receiveLog(c *gin.Context) {
 		return
 	}
 	logData := string(data)
+	//plus a \n
+	logData += "\n"
+	_, err = file.WriteString(logData)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	log.Printf("Received log: %v", logData)
 	forwardLog(logData)
 	c.JSON(http.StatusOK, gin.H{"message": "Log received and forwarded"})
+
 }
 
 func forwardLog(logData string) {
