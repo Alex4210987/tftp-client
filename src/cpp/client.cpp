@@ -69,6 +69,7 @@ int client::makeRequest(const char* mode, char* filename, int type){
 }
 
 void client::readRequest(char* request, int type, int size, char* filename) {
+    bool success=1;
     struct sockaddr_in clientAddr;
     struct sockaddr_in serverAddr;
     memset(&clientAddr, 0, sizeof(clientAddr));
@@ -103,7 +104,7 @@ void client::readRequest(char* request, int type, int size, char* filename) {
 
     // bind
     if (bind(clientSocket, (struct sockaddr*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR) {
-        l->anyLog("Error: bind() failed");
+        l->anyLog("Error: bind() failed! ");
         closesocket(clientSocket);
         WSACleanup();
         return;
@@ -114,19 +115,32 @@ void client::readRequest(char* request, int type, int size, char* filename) {
     memset(buffer, 0, sizeof(buffer));
     int byteCount = size;
     t->start();
+    int retransmissionCount = 0;
 
     if (sendto(clientSocket, request, byteCount, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        l->anyLog("Error: sendto() failed");
-        closesocket(clientSocket);
-        WSACleanup();
-        return;
+        retransmissionCount= 0;
+        while(retransmissionCount<Max_Try){
+            if(sendto(clientSocket, request, byteCount, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR){
+                retransmissionCount++;
+                Sleep(Time_Out);
+        }else{
+                break;
+            }
+        }
+        if(retransmissionCount==Max_Try){
+            l->anyLog("Error: sendto() failed! ");
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
     }
 
     // Receive and process data
     long long int totalReceived = 0;
     int bytesReceived;
     int blockNum; // Initial block number
-    int retransmissionCount = 0;
+    int blcockWant = 1;
+
     int addrLen = sizeof(serverAddr);
 
     while (true) {
@@ -136,36 +150,54 @@ void client::readRequest(char* request, int type, int size, char* filename) {
         if (buffer[1] == 5) {
             retransmissionCount = 0;
             l->errorLog("Read", filename, buffer[3], buffer);
+            success=0;
             break;
         }
         if (buffer[1] == 3){
             //write and ack
             blockNum=(((buffer[2] & 0xff) << 8) + (buffer[3] & 0xff)) & 0xffff;
-            if(bytesReceived<0){
-                fwrite(buffer+4, 1, 512, fp);
-                totalReceived += 512;
-            }else{
-                fwrite(buffer+4, 1, bytesReceived-4, fp);
-                totalReceived += bytesReceived;
-            }
+
             //l->anyLog("Received data packet%d", blockNum,"for", filename);
             sendAck(blockNum, clientSocket, serverAddr);
-                l->getAckLog(blockNum, filename);
-            retransmissionCount = 0;
+            l->getAckLog(blockNum, filename);
+            if (blockNum == blcockWant) {
+                blcockWant++;
+                retransmissionCount = 0;
+                if(bytesReceived==-1){
+                fwrite(buffer+4, 1, 502, fp);
+                //l->getAckLog(bytesReceived, filename);
+                totalReceived += 512;
+                }else if(bytesReceived>4){
+                    fwrite(buffer+4, 1, bytesReceived-4, fp);
+                    totalReceived += bytesReceived;
+                    totalReceived-=4;
+                    //l->getAckLog(bytesReceived, filename);
+                }
+            }
             if (bytesReceived < 516&&bytesReceived>4) {
+                success=1;
                 break;
             }
         }
         retransmissionCount++;
         Sleep(Time_Out);
         if(retransmissionCount==Max_Try){
-            sendError(clientSocket, serverAddr);
-            return;
+//            sendError(clientSocket, serverAddr, "Error: Max_Try reached");
+//            success=0;
+            break;
         }else{
             continue;
         }
     }
-    l->anyLog("Read operation completed successfully");
+    if(totalReceived<=0){
+        totalReceived=0;
+        success=0;
+    }
+    if(success==1){
+        l->anyLog("Read operation completed successfully");
+    }else{
+        l->anyLog("Read operation failed");
+    }
     t->stop();
     long long int elapsedTime = t->getElapsedTime();
     char logMessage[256];
@@ -178,6 +210,7 @@ void client::readRequest(char* request, int type, int size, char* filename) {
 }
 
 void client::writeRequest(char* request, int type, int size, char* filename) {
+    bool success=1;
     struct sockaddr_in clientAddr;
     struct sockaddr_in serverAddr;
     memset(&clientAddr, 0, sizeof(clientAddr));
@@ -233,11 +266,24 @@ void client::writeRequest(char* request, int type, int size, char* filename) {
     // 发送请求 and read ack
     int byteCount = size;
     t->start();
+    int retransmissionCount = 0;
+
     if (sendto(clientSocket, request, byteCount, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        l->anyLog("Error: sendto() failed");
-        closesocket(clientSocket);
-        WSACleanup();
-        return;
+        retransmissionCount= 0;
+        while(retransmissionCount<Max_Try){
+            if(sendto(clientSocket, request, byteCount, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR){
+                retransmissionCount++;
+                Sleep(Time_Out);
+        }else{
+                break;
+            }
+        }
+        if(retransmissionCount==Max_Try){
+            l->anyLog("Error: sendto() failed! ");
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
     }
 
     int blockNum = 1;
@@ -245,7 +291,6 @@ void client::writeRequest(char* request, int type, int size, char* filename) {
     int bytesSent;
     int ackBlockNum = 0;
     int addrLen = sizeof(serverAddr);
-    int retransmissionCount = 0;
 
     while (totalSent < dataSize) {
         int bytesToSend = std::min(dataSize - totalSent, BUFFER_SIZE); // 每个数据包最大为BUFFER_SIZE
@@ -280,9 +325,16 @@ void client::writeRequest(char* request, int type, int size, char* filename) {
                     l->anyLog("Error: Max_Try reached");
                     closesocket(clientSocket);
                     WSACleanup();
-                    return;
+                    success=0;
+                    break;
                 }
             } else {
+                if (ackPacket[1] == 5) {
+                    retransmissionCount = 0;
+                    l->errorLog("Write", filename, ackPacket[3], ackPacket);
+                    success=0;
+                    break;
+                }
                 int receivedBlockNum = (((ackPacket[2] & 0xff) << 8) + (ackPacket[3] & 0xff)) & 0xffff;
                 if (ackPacket[1] == 4 && receivedBlockNum == blockNum) {
                     // 成功收到ACK，增加块号并发送下一个数据包
@@ -296,13 +348,17 @@ void client::writeRequest(char* request, int type, int size, char* filename) {
                     // 收到无效ACK，需要重传数据包
                     sendto(clientSocket, dataPacket, bytesToSend + 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
                     retransmissionCount++;
+                    l->getAckLog(ackBlockNum, filename);
                     Sleep(Time_Out);
                 }
             }
         }
     }
-
-    l->anyLog("Write operation completed successfully");
+    if(success==1){
+        l->anyLog("Write operation completed successfully");
+    }else{
+        l->anyLog("Write operation failed");
+    }
     t->stop();
     long long int elapsedTime = t->getElapsedTime();
     char logMessage[256];
@@ -329,16 +385,16 @@ void client::sendAck(int blockNum, SOCKET clientSocket, struct sockaddr_in serve
     }
 }
 
-void client::sendError(SOCKET clientSocket, struct sockaddr_in serverAddr){
-    char error[512];
-    error[0] = 0;
-    error[1] = 5;
+void client::sendError(SOCKET clientSocket, struct sockaddr_in serverAddr, const char* error) {
+    char error_[512];
+    error_[0] = 0;
+    error_[1] = 5;
     //send
-    if(sendto(clientSocket, error, 512, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr))==SOCKET_ERROR){
+    if(sendto(clientSocket, error_, 512, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr))==SOCKET_ERROR) {
         l->anyLog("Error: sendto() failed");
         closesocket(clientSocket);
         WSACleanup();
         return;
     }
-    l->anyLog("Send error to server");
+    l->anyLog(error);
 }

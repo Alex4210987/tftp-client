@@ -10,7 +10,6 @@ import (
 var tftp_path string = "D:\\codefield\\tftp-client\\src\\cpp\\cmake-build-debug\\tftp_cpp.exe"
 
 func tftp(c *gin.Context) {
-
 	// 创建一个请求对象
 	var req request
 
@@ -33,14 +32,18 @@ func tftp(c *gin.Context) {
 	// 打印请求对象
 	fmt.Println(req)
 
-	//调用tftp_cpp.exe
-	cmd := exec.Command(tftp_path, req.Operation, req.Mode, req.FileName)
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("Error executing command:", err)
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
 	// 返回一个 JSON 格式的响应
 	c.JSON(200, gin.H{"status": "ok"})
+
+	// 使用 Goroutine 异步执行命令
+	go func() {
+		// 调用 tftp_cpp.exe
+		cmd := exec.Command(tftp_path, req.Operation, req.Mode, req.FileName)
+		fmt.Println(cmd)
+		err := cmd.Run()
+		if err != nil {
+			fmt.Println("Error executing command:", err)
+			// 可以在这里记录错误信息或者采取其他处理步骤
+		}
+	}()
 }

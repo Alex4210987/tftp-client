@@ -3,9 +3,14 @@
 //
 #include "main.h"
 
-int main() {
-    int argc = 4;
-    char* argv[4] = {"./tftp-client.exe", "read", "ascii", "read.txt"};
+int main(int argc, char* argv[]) {
+    //const char* Log_File = "log.txt";
+    //const char* Log_File = "log.txt";
+    //const char* Log_File = "log.txt";
+    //const char* Log_File = "log.txt";
+    //const char* Log_File
+//    int argc = 4;
+//    char* argv[4] = {"./tftp-client.exe", "read", "ascii", "read.txt"};
     if (argc != 4) {
         cout << "Usage: " << argv[0] << " <operation> <mode> <fileName>" << endl;
         return 1;

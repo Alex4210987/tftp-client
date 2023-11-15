@@ -15,8 +15,8 @@
 
 #pragma comment(lib, "ws2_32.lib") // Link with ws2_32.lib to avoid linking errors
 
-#define Time_Out 30      // Set the timeout for retransmission (in microseconds)
-#define Max_Try  10
+#define Time_Out 100      // Set the timeout for retransmission (in microseconds)
+#define Max_Try  100
 
 extern const char* Read_File_Path;
 extern const char* Write_File_Path;
@@ -36,7 +36,7 @@ public:
     void writeRequest(char* request, int type, int size, char* filename);
     char* requestBuffer;
     void sendAck(int blockNum, SOCKET clientSocket, struct sockaddr_in serverAddr);
-    void sendError(SOCKET clientSocket, struct sockaddr_in serverAddr);
+    void sendError(SOCKET clientSocket, struct sockaddr_in serverAddr, const char* error);
 
 private:
     logger *l;

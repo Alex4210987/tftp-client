@@ -62,7 +62,7 @@
 </head>
 
 <body>
-    <h1>File Operations</h1>
+    <h1>TFTP Client</h1>
 
     <div class="input-container">
         <label for="operation">Choose Operation:</label>
@@ -94,13 +94,25 @@
             var operation = document.querySelector('input[name="operation"]:checked').value;
             var mode = document.querySelector('input[name="mode"]:checked').value;
             var fileName = document.getElementById("fileName").value;
-    
+
             var requestData = {
                 operation: operation,
                 mode: mode,
                 fileName: fileName
             };
-    
+
+            // // Set a timeout (e.g., 10 seconds)
+            // var timeoutDuration = 10000; // 10 seconds
+            // var timeoutId;
+
+            // // Function to handle timeout
+            // function handleTimeout() {
+            //     document.getElementById("log").innerHTML = "Error: No reply received within the specified time.";
+            // }
+
+            // // Start the timeout
+            // timeoutId = setTimeout(handleTimeout, timeoutDuration);
+
             fetch('http://127.0.0.1:8080/tftp', {
                 method: 'POST',
                 headers: {
@@ -110,15 +122,21 @@
             })
                 .then(response => response.json())
                 .then(data => {
+                    // Clear the timeout as a reply is received
+                    clearTimeout(timeoutId);
+
                     console.log('Success:', data);
                     document.getElementById("log").innerHTML = data.message;
                 })
                 .catch((error) => {
+                    // Clear the timeout on error
+                    clearTimeout(timeoutId);
+
                     console.error('Error:', error);
+                    document.getElementById("log").innerHTML = "Error: " + error.message;
                 });
         });
-
-                // 前端 JavaScript 代码
+                
         var logDiv = document.getElementById("log");
 
         var socket = new WebSocket("ws://127.0.0.1:8080/ws"); // WebSocket 连接到后端
